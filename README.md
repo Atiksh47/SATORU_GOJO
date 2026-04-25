@@ -1,67 +1,85 @@
-# SATORU GOJO - Cursed Technique Visualizer
+# 呪術廻戦 — SATORU GOJO
 
-An interactive web application that brings Jujutsu Kaisen's cursed techniques to life through hand gesture recognition and real-time 3D particle visualization.
+An interactive hand-tracking particle experience built with Three.js and MediaPipe. Control cursed techniques in real time using your webcam and hand gestures — just like Gojo.
 
-## Overview
+---
 
-This project uses computer vision and 3D graphics to create an immersive experience where users can control different cursed energy manifestations by performing specific hand gestures in front of their webcam. Inspired by Satoru Gojo's abilities from Jujutsu Kaisen, the app features four main cursed techniques: Red, Void, Purple, and Domain Expansion: Malevolent Shrine.
+## Demo
 
-## Features
+Open `index.html` in a browser, allow webcam access, and unleash your cursed energy.
 
-- **Real-time Hand Tracking**: Uses MediaPipe's hand detection for gesture recognition
-- **3D Particle Systems**: Powered by Three.js with bloom effects for stunning visuals
-- **Gesture-Based Controls**:
-  - **Neutral**: Default state with minimal particles
-  - **Red**: Reverse cursed technique with spiraling red energy
-  - **Void**: Domain expansion with infinite void particles
-  - **Purple**: Hollow purple with explosive particle effects
-  - **Shrine**: Malevolent shrine domain with structured formations
-- **Responsive Design**: Adapts to different screen sizes
-- **Film Grain Effect**: Adds cinematic atmosphere
+---
 
-## How to Use
+## Gestures
 
-1. Open `index.html` in a modern web browser
-2. Grant camera permissions when prompted
-3. Position your hand in front of the webcam
-4. Perform gestures to activate different techniques:
+| Gesture | Technique | Visual Effect |
+|---|---|---|
+| 🤏 Pinch | **Hollow Purple** | Explosive purple particles erupt in all directions with intense bloom |
+| 🖐️ Open palm | **Malevolent Shrine** | Domain expansion with structured pillars, formations, and crimson glow |
+| ✌️ Two fingers | **Infinite Void** | Infinite void particles in spherical formation with cyan accents |
+| ☝️ Index finger | **Red** | Spiraling red energy arms with fiery crimson particles |
+| Neutral | **Neutral** | Minimal cursed energy particles in default state |
 
-   - **Red**: Extend index finger only
-   - **Void**: Extend index and middle fingers
-   - **Purple**: Pinch thumb and index finger together
-   - **Shrine**: Extend all fingers (open palm)
+---
 
-## Requirements
+## How It Works
 
-- Modern web browser with WebGL support (Chrome, Firefox, Safari, Edge)
-- Webcam access
-- Internet connection (for loading external libraries)
+### Stack
+- **[Three.js](https://threejs.org/) r160** — 3D particle rendering via `THREE.Points` with additive blending
+- **[MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)** — real-time hand landmark detection (21 keypoints per hand)
+- **`UnrealBloomPass`** — HDR bloom glow, strength varies per technique (1.0-4.0)
+- No build step — single HTML file, all dependencies via CDN
 
-## Technologies Used
+### Particle System
+20,000 particles share three typed arrays (`position`, `color`, `size`). Each technique defines a target configuration; every animation frame lerps the current arrays toward the targets:
 
-- **Three.js**: 3D graphics and particle systems
-- **MediaPipe**: Hand tracking and gesture recognition
-- **HTML5 Canvas**: Video processing and overlay
-- **Post-processing Effects**: Bloom and grain effects
+```js
+pos[i] += (targetPos[i] - pos[i]) * 0.1;
+```
 
-## Browser Compatibility
+All techniques use the same lerp speed for smooth transitions. Particles are positioned using spherical coordinates for organic formations, with color and size attributes for visual variety.
 
-Works best in:
-- Google Chrome 88+
-- Mozilla Firefox 85+
-- Microsoft Edge 88+
-- Safari 14+
+### Gesture Detection
+Finger state is determined by comparing tip landmark Y to PIP joint Y — lower Y on screen means the finger is extended:
 
-## Performance Notes
+```js
+const isUp = (t, p) => lm[t].y < lm[p].y;
+const pinch = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
+```
 
-- The application uses GPU-accelerated rendering
-- Particle count is optimized for smooth performance
-- May require a decent graphics card for best experience
+Priority order: pinch → all 4 up → 3 up → 2 up → 1 up.
 
-## Credits
+---
 
-Inspired by Jujutsu Kaisen manga/anime series by Gege Akutami.
+## Running Locally
 
-## License
+No install required. Just open the file:
 
-This project is for educational and entertainment purposes only.
+```bash
+# Option 1 — direct file open
+open index.html    # macOS
+start index.html   # Windows
+
+# Option 2 — local server (recommended for some browsers)
+npx serve .
+# or
+python -m http.server 8080
+```
+
+> **Note:** Chrome and Edge work best. A webcam is required.
+
+---
+
+## Project Structure
+
+```
+SATORU GOJO/
+└── index.html    # Everything — scene, particle systems, hand tracking, UI
+└── README.md
+```
+
+---
+
+## Inspired By
+
+- Jujutsu Kaisen (Gege Akutami)
